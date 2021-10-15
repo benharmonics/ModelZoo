@@ -13,12 +13,13 @@ These models use [Pluto.jl](https://plutojl.org/), an interactive notebook simil
 For best results, install Pluto in the Julia REPL:
 
 ```using Pkg```
+
 ```Pkg.add("Pluto")```
 
 Then open a new notebook with
 
 ```import Pluto```
+
 ```Pluto.run()```
 
-and you can actually just paste the Github URL corresponding to the Julia (.jl) file you want to view.
-(One of the benefits of Pluto is that packages are installed directly into the notebook, so there shouldn't be much more setup to do.)
+and you can actually just paste the Github URL corresponding to the Julia (.jl) file you want to view. (One of the benefits of Pluto is that packages are installed directly into the notebook, so there shouldn't be much more setup to do.)
