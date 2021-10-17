@@ -177,6 +177,9 @@ function train(; kws...)
 	args.return_model && return cpu(model)
 end
 
+# ╔═╡ 7deda3de-1932-416e-b75b-1f8db881318c
+md"**Be forewarned**: training on my CPU takes around 25-30 minutes..."
+
 # ╔═╡ a9ea81b2-95c6-462b-bc45-830693f124b5
 m = train(; η=6e-4)
 
@@ -191,20 +194,25 @@ function rotateimages!(A::Array)
 end
 
 # ╔═╡ 30f00df3-ae43-4416-a869-01e24954514c
-(imgs, _) = MLDatasets.CIFAR10.testdata(Float32);
+(imgs, labels) = MLDatasets.CIFAR10.testdata(Float32);
+
+# ╔═╡ 9eb84cba-405b-4957-bcbb-eb5b8d67ce69
+rotateimages!(imgs)
 
 # ╔═╡ 0cbd8e48-d577-437e-85fb-dec0c6b9f24a
 @bind N Slider(1:10000, default=1)
 
 # ╔═╡ cd98c65c-e34c-4b81-87a1-ca5efb039d38
 begin 
-	rotateimages!(imgs)
 	img = [RGB(imgs[i, j, :, N]...) for i ∈ 1:size(imgs, 1), j ∈ 1:size(imgs, 2)]
 	classnames = MLDatasets.CIFAR10.classnames() 	# corresponding class names
 	oh_labels = imgs[:,:,:,N:N] |> m |> onecold # vector contains one element
 	label = oh_labels[1] 	# labels could be from 1→10
-	classnames[label], img
+	img
 end
+
+# ╔═╡ c911299b-bf70-40f4-8d28-71aeb99dd52b
+md"**Calculated**: $(classnames[label]). **Actual**: $(classnames[labels[N] + 1])."
 
 # ╔═╡ ff0abcb5-a6a6-4342-aaca-b1f69494d1ad
 md"Loading a trained dataset"
@@ -1284,11 +1292,14 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═967b63ed-4ef9-488f-808f-b143da4b6c0a
 # ╟─8101d48e-b89b-4a75-90cc-5db01bdabe67
 # ╠═91577c58-7e04-401a-ab03-01b0706ec0cd
+# ╟─7deda3de-1932-416e-b75b-1f8db881318c
 # ╠═a9ea81b2-95c6-462b-bc45-830693f124b5
 # ╟─fd803284-f2c1-40cc-ab2f-cc5202825fd4
 # ╠═b5d9ac3c-c070-4f97-8eb9-934c2e449143
 # ╠═30f00df3-ae43-4416-a869-01e24954514c
+# ╠═9eb84cba-405b-4957-bcbb-eb5b8d67ce69
 # ╟─0cbd8e48-d577-437e-85fb-dec0c6b9f24a
+# ╟─c911299b-bf70-40f4-8d28-71aeb99dd52b
 # ╠═cd98c65c-e34c-4b81-87a1-ca5efb039d38
 # ╟─ff0abcb5-a6a6-4342-aaca-b1f69494d1ad
 # ╠═e89a29bb-4947-4cf1-8e3b-4dcb8f35f09d
