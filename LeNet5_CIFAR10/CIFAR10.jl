@@ -26,7 +26,14 @@ begin
 	using Images: RGB
 	import MLDatasets
 	import BSON
+	import Dates
 end
+
+# ╔═╡ c641b33a-3338-4975-97ab-74e49cd8c9e7
+md"# Color image recognition with a CNN"
+
+# ╔═╡ 3ef1ea66-f76b-45bb-867b-274564109953
+md"Convenience struct for arguments"
 
 # ╔═╡ 20dd84b2-d360-4726-9bf8-1d7e2c109619
 Base.@kwdef mutable struct Args
@@ -38,9 +45,12 @@ Base.@kwdef mutable struct Args
 	use_cuda = true
 	return_model = true
 	infotime = 1
-	checktime = epochs
-	savepath = "runs/"
+	checktime = 5
+	savepath = "runs/$(Dates.today())/"
 end
+
+# ╔═╡ a06b2007-c535-4190-8060-8068ab95856e
+md"Downloading and preparing data"
 
 # ╔═╡ 046de713-9a39-4398-8529-b654fc01c7c2
 function load_data(args)
@@ -57,6 +67,9 @@ function load_data(args)
 	
 	trainloader, testloader
 end
+
+# ╔═╡ 59dfc2f0-7709-4557-a391-b9aa18cf4627
+md"Loss and accuracy"
 
 # ╔═╡ 9ac1d4a7-e677-4881-8ec1-e54ca5693750
 loss(ŷ, y) = logitcrossentropy(ŷ, y)
@@ -79,6 +92,9 @@ function eval_loss_accuracy(loader, model, device)
 	loss_val, acc_val
 end
 
+# ╔═╡ af4f4418-9a03-47d3-a1c9-819dc4b6823d
+md"[LeNet5 architecture](http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf)"
+
 # ╔═╡ 967b63ed-4ef9-488f-808f-b143da4b6c0a
 function LeNet5(; imgsize=(32,32,3), nclasses=10)
 	out_conv_size = (imgsize[1]÷4 - 3, imgsize[2]÷4 - 3, 36)
@@ -94,6 +110,9 @@ function LeNet5(; imgsize=(32,32,3), nclasses=10)
 		Dense(84, nclasses)
 		)
 end
+
+# ╔═╡ 8101d48e-b89b-4a75-90cc-5db01bdabe67
+md"**Training**"
 
 # ╔═╡ 91577c58-7e04-401a-ab03-01b0706ec0cd
 function train(; kws...)
@@ -148,7 +167,7 @@ function train(; kws...)
 		epoch % args.infotime == 0 && report(epoch) 	# Quick info
 		if args.checktime > 0 && epoch % args.checktime == 0
 			!ispath(args.savepath) && mkpath(args.savepath)
-			modelpath = joinpath(args.savepath, "model.bson")
+			modelpath = joinpath(args.savepath, "model-epoch$(epoch).bson")
 			let model = cpu(model)
 				BSON.@save modelpath model
 			end
@@ -161,32 +180,38 @@ end
 # ╔═╡ a9ea81b2-95c6-462b-bc45-830693f124b5
 m = train(; η=6e-4)
 
+# ╔═╡ fd803284-f2c1-40cc-ab2f-cc5202825fd4
+md"Checking out our images and seeing how well our net did on this problem (honestly? Not very well...)"
+
+# ╔═╡ b5d9ac3c-c070-4f97-8eb9-934c2e449143
+function rotateimages!(A::Array)
+	for N ∈ 1:size(A)[end], i ∈ 1:3
+		A[:,:,i,N] = rotr90(A[:,:,i,N])
+	end
+end
+
+# ╔═╡ 30f00df3-ae43-4416-a869-01e24954514c
+(imgs, _) = MLDatasets.CIFAR10.testdata(Float32);
+
 # ╔═╡ 0cbd8e48-d577-437e-85fb-dec0c6b9f24a
 @bind N Slider(1:10000, default=1)
 
 # ╔═╡ cd98c65c-e34c-4b81-87a1-ca5efb039d38
-let (x, y) = MLDatasets.CIFAR10.testdata(Float32)
-	function rotateimage(A::Array)
-		A′ = zeros(Float32, size(A, 1), size(A, 2), 3)
-		for i ∈ 1:3
-			A′[1:size(A, 1), 1:size(A, 2), i] = rotr90(A[:,:,i,N])
-		end
-		A′
-	end
-	xₙ = rotateimage(x)
-	img = [RGB(xₙ[i, j, :]...) for i ∈ 1:size(x, 1), j ∈ 1:size(x, 2)]
+begin 
+	rotateimages!(imgs)
+	img = [RGB(imgs[i, j, :, N]...) for i ∈ 1:size(imgs, 1), j ∈ 1:size(imgs, 2)]
 	classnames = MLDatasets.CIFAR10.classnames() 	# corresponding class names
-	oh_labels = x[:,:,:,N:N] |> m |> onecold # vector contains one element
+	oh_labels = imgs[:,:,:,N:N] |> m |> onecold # vector contains one element
 	label = oh_labels[1] 	# labels could be from 1→10
 	classnames[label], img
 end
 
+# ╔═╡ ff0abcb5-a6a6-4342-aaca-b1f69494d1ad
+md"Loading a trained dataset"
+
 # ╔═╡ e89a29bb-4947-4cf1-8e3b-4dcb8f35f09d
-let (x, y) = MLDatasets.CIFAR10.testdata()
-	# Loading the saved model
-	modelpath = joinpath(Args().savepath, "model.bson")
-	BSON.@load modelpath model
-	#x[:,:,:,4]
+let modelpath = joinpath(Args().savepath, "model-epoch10.bson")
+	model = BSON.load(modelpath, @__MODULE__)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -194,6 +219,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
@@ -1245,16 +1271,26 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 """
 
 # ╔═╡ Cell order:
+# ╟─c641b33a-3338-4975-97ab-74e49cd8c9e7
 # ╠═fd51f770-2b9d-11ec-2c1f-39a232c32468
+# ╟─3ef1ea66-f76b-45bb-867b-274564109953
 # ╠═20dd84b2-d360-4726-9bf8-1d7e2c109619
+# ╟─a06b2007-c535-4190-8060-8068ab95856e
 # ╠═046de713-9a39-4398-8529-b654fc01c7c2
+# ╟─59dfc2f0-7709-4557-a391-b9aa18cf4627
 # ╠═9ac1d4a7-e677-4881-8ec1-e54ca5693750
 # ╠═eab315bf-8e2d-4be7-81ce-159da8c799c6
+# ╟─af4f4418-9a03-47d3-a1c9-819dc4b6823d
 # ╠═967b63ed-4ef9-488f-808f-b143da4b6c0a
+# ╟─8101d48e-b89b-4a75-90cc-5db01bdabe67
 # ╠═91577c58-7e04-401a-ab03-01b0706ec0cd
 # ╠═a9ea81b2-95c6-462b-bc45-830693f124b5
+# ╟─fd803284-f2c1-40cc-ab2f-cc5202825fd4
+# ╠═b5d9ac3c-c070-4f97-8eb9-934c2e449143
+# ╠═30f00df3-ae43-4416-a869-01e24954514c
 # ╟─0cbd8e48-d577-437e-85fb-dec0c6b9f24a
 # ╠═cd98c65c-e34c-4b81-87a1-ca5efb039d38
+# ╟─ff0abcb5-a6a6-4342-aaca-b1f69494d1ad
 # ╠═e89a29bb-4947-4cf1-8e3b-4dcb8f35f09d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
