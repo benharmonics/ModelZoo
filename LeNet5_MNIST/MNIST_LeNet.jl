@@ -24,9 +24,34 @@ begin
 	using Statistics, Random, CUDA, PlutoUI
 	using ProgressMeter: @showprogress
 	using Images: Gray
+	import Dates
 	import MLDatasets
 	import BSON
 end
+
+# ╔═╡ cc864502-6eec-4c92-ace8-f7d72fd66e8f
+md"# Digit recognition with a Convolutional Neural Network"
+
+# ╔═╡ c74eb080-1d62-4d10-b596-d593dc580145
+md"Convenience struct ```Args``` to hold all our arguments:"
+
+# ╔═╡ b9f67b96-6896-45db-9d1b-79ca6112612a
+Base.@kwdef mutable struct Args
+	η = 3e-4 			# Learning rate
+	λ = 0 				# L2 regularizer param, implemented at weight decay
+	batchsize = 128
+	epochs = 10
+	seed = 0
+	use_cuda = true
+	return_model = true
+	infotime = 1
+	checktime = 5
+	tblogger = true
+	savepath = "runs/$(Dates.today())/"
+end
+
+# ╔═╡ 9cf6e113-e799-4a4e-92e3-84e51eb8e74f
+md"We'll be using the [LeNet5](http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf) architecture:"
 
 # ╔═╡ 8fee236e-c453-489e-b792-9e684b1d1141
 function LeNet5(; imgsize=(28,28,1), nclasses=10)
@@ -46,20 +71,8 @@ function LeNet5(; imgsize=(28,28,1), nclasses=10)
 		)
 end
 
-# ╔═╡ b9f67b96-6896-45db-9d1b-79ca6112612a
-Base.@kwdef mutable struct Args
-	η = 3e-4 			# Learning rate
-	λ = 0 				# L2 regularizer param, implemented at weight decay
-	batchsize = 128
-	epochs = 10
-	seed = 0
-	use_cuda = true
-	return_model = true
-	infotime = 1
-	checktime = epochs
-	tblogger = true
-	savepath = "runs/"
-end
+# ╔═╡ 6870a7f2-2bef-405d-a31d-89bb05ed18cf
+md"## Download & prepare data"
 
 # ╔═╡ 824347c4-1cf8-4794-8821-c07ebb5a2892
 function load_data(args)
@@ -85,6 +98,9 @@ function load_data(args)
 	train_loader, test_loader
 end
 
+# ╔═╡ f0720c68-3582-4c23-885b-80937693b5a3
+md"## Loss & accuracy functions"
+
 # ╔═╡ ed63f032-6d9d-48e3-a2cf-b22f2c77f6b2
 loss(ŷ, y) = logitcrossentropy(ŷ, y)
 
@@ -105,6 +121,9 @@ function eval_loss_accuracy(loader, model, device)
 	
 	loss_val, acc_val
 end
+
+# ╔═╡ bfed0f44-0f53-4344-8280-cebeebfd59b2
+md"## Training the model"
 
 # ╔═╡ fcb5b8e2-e713-4f39-ae02-5db8e8f70454
 function train(; kws...)
@@ -159,7 +178,7 @@ function train(; kws...)
 		epoch % args.infotime == 0 && report(epoch)
 		if args.checktime > 0 && epoch % args.checktime == 0
 			!ispath(args.savepath) && mkpath(args.savepath)
-			modelpath = joinpath(args.savepath, "model.bson")
+			modelpath = joinpath(args.savepath, "model-epoch$(epoch).bson")
 			let model = cpu(model) # return model to CPU before serialization
 				BSON.@save modelpath model
 			end
@@ -169,8 +188,14 @@ function train(; kws...)
 	args.return_model && return cpu(model)
 end
 
+# ╔═╡ 8a8c6d53-8542-4755-9074-04c22f2171d2
+md"## Using the model"
+
 # ╔═╡ 8143d560-60d2-41e4-a6da-f4480fc3d879
-m = train()
+model = train()
+
+# ╔═╡ 251678dc-5e44-444f-946e-7e16b2f30ed0
+md"Let's check it out:"
 
 # ╔═╡ ac490092-cd19-417e-9e77-6935b8feb6eb
 @bind N Slider(1:10000, default=20)
@@ -178,17 +203,23 @@ m = train()
 # ╔═╡ bc7caa57-2adb-4270-9814-bdefadc082bf
 let (x, y) = MLDatasets.MNIST.testdata(Float32)
 	x′ = reshape(x, 28, 28, 1, :)
-	onecold(m(x′[:,:,:,N:N]), 0:9), Gray.(reverse(rotr90(x[:,:,N]), dims=2))
+	onecold(model(x′[:,:,:,N:N]), 0:9), Gray.(reverse(rotr90(x[:,:,N]), dims=2))
 end
 
+# ╔═╡ 51dfb587-d083-4986-bcde-74bbf32ad3ae
+md"## Loading a trained model
+
+Note that the ```@__MODULE__``` argument lets BSON use your current environment variables (it needs this because Flux uses NNlib)."
+
 # ╔═╡ e7934634-7d6e-4e20-9575-e46fb7749786
-BSON.@load "runs/model.bson" model
+model_load = BSON.load("runs/$(Dates.today())/model-epoch10.bson", @__MODULE__)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
@@ -1240,16 +1271,25 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 """
 
 # ╔═╡ Cell order:
+# ╟─cc864502-6eec-4c92-ace8-f7d72fd66e8f
 # ╠═b02f39a2-2b91-11ec-0131-3d5c8629c0a1
-# ╠═8fee236e-c453-489e-b792-9e684b1d1141
+# ╟─c74eb080-1d62-4d10-b596-d593dc580145
 # ╠═b9f67b96-6896-45db-9d1b-79ca6112612a
+# ╟─9cf6e113-e799-4a4e-92e3-84e51eb8e74f
+# ╠═8fee236e-c453-489e-b792-9e684b1d1141
+# ╟─6870a7f2-2bef-405d-a31d-89bb05ed18cf
 # ╠═824347c4-1cf8-4794-8821-c07ebb5a2892
+# ╟─f0720c68-3582-4c23-885b-80937693b5a3
 # ╠═ed63f032-6d9d-48e3-a2cf-b22f2c77f6b2
 # ╠═9a5f495f-ef25-44ed-8364-ef06ad49e461
+# ╟─bfed0f44-0f53-4344-8280-cebeebfd59b2
 # ╠═fcb5b8e2-e713-4f39-ae02-5db8e8f70454
+# ╟─8a8c6d53-8542-4755-9074-04c22f2171d2
 # ╠═8143d560-60d2-41e4-a6da-f4480fc3d879
+# ╟─251678dc-5e44-444f-946e-7e16b2f30ed0
 # ╟─ac490092-cd19-417e-9e77-6935b8feb6eb
 # ╠═bc7caa57-2adb-4270-9814-bdefadc082bf
+# ╟─51dfb587-d083-4986-bcde-74bbf32ad3ae
 # ╠═e7934634-7d6e-4e20-9575-e46fb7749786
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
