@@ -26,3 +26,6 @@ Manifest.toml
 # Some projects save runs as BSON files in a folder called 'runs'.
 */runs
 */*.bson
+
+# Don't include downloaded data for RNN network
+input.txt
