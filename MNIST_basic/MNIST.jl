@@ -8,8 +8,8 @@ import BSON
 Base.@kwdef struct Args
     η::Float32 = 3e-4
     batchsize::Integer = 128
-    epochs::Integer = 20
-    infotime::Integer = 2
+    epochs::Integer = 50
+    infotime::Integer = 5
     usecuda::Bool = true
     savemodel::Bool = true
     savepath::String = "runs/"
@@ -94,5 +94,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     cd(@__DIR__)
-    model = @time train()
+    model = @time train(; epochs=100)
 end
