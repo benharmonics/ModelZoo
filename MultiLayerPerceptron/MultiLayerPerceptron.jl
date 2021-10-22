@@ -8,7 +8,7 @@ using InteractiveUtils
 using Flux, CUDA
 
 # ╔═╡ fe9e97e7-0fd2-47ce-9dd8-fb557eb5343c
-using Flux: onehotbatch, onecold, logitcrossentropy
+using Flux: onehotbatch, onecold, crossentropy
 
 # ╔═╡ ed838cf8-e927-4508-b999-ced96a2e7942
 using Flux: DataLoader
@@ -22,6 +22,9 @@ md"# Basic multi-layer perceptron"
 # ╔═╡ f39297bf-aeec-4a3d-a5b7-8daf91851af8
 import MLDatasets
 
+# ╔═╡ 1ff19be0-3259-4f27-9e96-05908ae2f9b5
+md"Convenience struct for our options"
+
 # ╔═╡ c2156f38-3399-4ac7-9562-250c478f24be
 Base.@kwdef struct Args
 	η = 1e-3
@@ -30,6 +33,9 @@ Base.@kwdef struct Args
 	usecuda = true
 	infotime = 2
 end
+
+# ╔═╡ d9c2df85-b291-45d5-ad90-beed17fc6548
+md"This function *just* downloads the data"
 
 # ╔═╡ 897718a3-e665-489d-b320-529f2f512df8
 function getdata()
@@ -44,6 +50,9 @@ function getdata()
 	xtrain, ytrain, xtest, ytest
 end
 
+# ╔═╡ 342cd3af-09bf-477a-bf5e-f502d30cc07c
+md"*This* function puts the data into small-size ```DataLoader```s."
+
 # ╔═╡ a085723a-3676-40b4-a87c-67bcdd51b7dc
 function dataloaders(args)
 	xtrain, ytrain, xtest, ytest = getdata()
@@ -54,11 +63,20 @@ function dataloaders(args)
 	trainloader, testloader
 end
 
+# ╔═╡ 16f6c9b5-8fa1-48c6-b6e6-945c620e5e9f
+md"Accuracy score & confusion functions"
+
 # ╔═╡ 1c16dae5-4697-49a1-8f53-2c8e46be32e2
 accuracy(x, y, model) = mean(model(x) |> onecold .== y |> onecold)
 
+# ╔═╡ 6e869cba-cc83-4d43-8505-acb342fc4a6e
+md"**Notation:** The transpose of a matrix ```A``` is denoted ```transpose(A)``` or equivalently ```A'```."
+
 # ╔═╡ 1673a7ff-bb0b-44da-ae4f-eb5b8bb6a174
 confusion(x, y, model) = (ŷ = onehotbatch(model(x) |> onecold, 1:10); y * ŷ')
+
+# ╔═╡ 154d9bba-ed7c-4973-8eca-3209f0947bdd
+md"Building & training our model"
 
 # ╔═╡ 39b3c4a2-e579-41da-9966-96eb88a51b83
 function train(; kws...)
@@ -72,7 +90,7 @@ function train(; kws...)
 	
 	ps = params(m)
 	
-	loss(x, y) = logitcrossentropy(m(x), y)
+	loss(x, y) = crossentropy(m(x), y)
 	
 	opt = ADAM(args.η)
 	
@@ -95,6 +113,11 @@ function train(; kws...)
 	
 	return cpu(m), xtest, ytest
 end
+
+# ╔═╡ a521d498-9cac-41fa-a3a5-ab96b265833c
+md"It trains pretty quickly, at least after the first time all of our functions compile or whatever. It's also pretty successful.
+
+Let's check it out:"
 
 # ╔═╡ 3ad28ff9-13f9-4308-873c-c49f5627d1e4
 m, x, y = @time train();
@@ -779,12 +802,19 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═ed838cf8-e927-4508-b999-ced96a2e7942
 # ╠═fb4b1563-5a04-47b4-bf14-72849c21cb8b
 # ╠═f39297bf-aeec-4a3d-a5b7-8daf91851af8
+# ╟─1ff19be0-3259-4f27-9e96-05908ae2f9b5
 # ╠═c2156f38-3399-4ac7-9562-250c478f24be
+# ╟─d9c2df85-b291-45d5-ad90-beed17fc6548
 # ╠═897718a3-e665-489d-b320-529f2f512df8
+# ╟─342cd3af-09bf-477a-bf5e-f502d30cc07c
 # ╠═a085723a-3676-40b4-a87c-67bcdd51b7dc
+# ╟─16f6c9b5-8fa1-48c6-b6e6-945c620e5e9f
 # ╠═1c16dae5-4697-49a1-8f53-2c8e46be32e2
+# ╟─6e869cba-cc83-4d43-8505-acb342fc4a6e
 # ╠═1673a7ff-bb0b-44da-ae4f-eb5b8bb6a174
+# ╟─154d9bba-ed7c-4973-8eca-3209f0947bdd
 # ╠═39b3c4a2-e579-41da-9966-96eb88a51b83
+# ╟─a521d498-9cac-41fa-a3a5-ab96b265833c
 # ╠═3ad28ff9-13f9-4308-873c-c49f5627d1e4
 # ╠═633ad30a-dc6d-475f-8675-484dabb9346a
 # ╠═496099b6-3ee9-4a49-87b7-d4a6603963ad
