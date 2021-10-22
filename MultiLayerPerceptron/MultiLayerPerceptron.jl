@@ -147,7 +147,7 @@ md"Visually compare the whole test set to our predictions"
 @bind N Slider(1:10000)
 
 # ╔═╡ 26b9476a-7479-4098-a6f7-5c82295c3648
-md"### Predicted: $(onecold(m(x)[:,N], 0:9)), Actual: $(onecold(y, 0:9)[N])"
+md"### Predicted: $(onecold(m(x)[:,N], 0:9)) | Actual: $(onecold(y[:,N], 0:9))"
 
 # ╔═╡ 268b979f-f412-44e0-8b00-104a6a5c5c74
 reverse(Gray.(x[:,:,N]), dims=2) |> rotl90
@@ -1231,6 +1231,6 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╟─51079ca9-984e-45db-a3df-0780932c2215
 # ╟─61c94951-876c-4218-a47b-7fdd6312916e
 # ╟─26b9476a-7479-4098-a6f7-5c82295c3648
-# ╠═268b979f-f412-44e0-8b00-104a6a5c5c74
+# ╟─268b979f-f412-44e0-8b00-104a6a5c5c74
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
