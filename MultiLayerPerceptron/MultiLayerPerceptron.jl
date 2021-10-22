@@ -58,7 +58,7 @@ function dataloaders(args)
 	xtrain, ytrain, xtest, ytest = getdata()
 	
 	trainloader = DataLoader((xtrain, ytrain); batchsize=args.batchsize, shuffle=true)
-	testloader = DataLoader((xtest, ytest); batchsize=args.batchsize)
+	testloader = DataLoader((xtest, ytest); batchsize=size(xtrain, ndims(xtrain)))
 	
 	trainloader, testloader
 end
@@ -86,6 +86,8 @@ function train(; kws...)
 	
 	trainloader, testloader = dataloaders(args)
 	
+	xtest, ytest = testloader.data
+	
 	m = Chain(flatten, Dense(28*28, 84, relu), Dense(84, 10), softmax) |> device
 	
 	ps = params(m)
@@ -93,8 +95,6 @@ function train(; kws...)
 	loss(x, y) = crossentropy(m(x), y)
 	
 	opt = ADAM(args.η)
-	
-	_, _, xtest, ytest = getdata()
 	
 	report(epoch) = @info "Epoch $epoch\n\tAccuracy: $(accuracy(m, xtest, ytest))"
 	
