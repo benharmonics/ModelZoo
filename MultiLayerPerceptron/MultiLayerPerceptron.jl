@@ -152,6 +152,20 @@ md"### Predicted: $(onecold(m(x)[:,N], 0:9)) | Actual: $(onecold(y[:,N], 0:9))"
 # ╔═╡ 268b979f-f412-44e0-8b00-104a6a5c5c74
 reverse(Gray.(x[:,:,N]), dims=2) |> rotl90
 
+# ╔═╡ 306cd2ba-6839-45c1-9911-3394b6d07b52
+md"Here's the thing though...
+
+It's pretty clear to us that this random data isn't a number at all."
+
+# ╔═╡ a791682e-51c2-45c3-b2d2-4a917b122849
+randomimg = rand(Float32, 28, 28); Gray.(randomimg[:,:])
+
+# ╔═╡ a612bb6b-148e-4826-82a2-b522a7c3e8f0
+md"However, our model is relatively sure this random data is a $(onecold(randomimg[:,:,:] |> m, 0:9))..."
+
+# ╔═╡ 7565201e-eadc-46f4-875f-b4cee3f34fc5
+heatmap = Gray.(randomimg[:,:,:] |> m)
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -1231,6 +1245,10 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╟─51079ca9-984e-45db-a3df-0780932c2215
 # ╟─61c94951-876c-4218-a47b-7fdd6312916e
 # ╟─26b9476a-7479-4098-a6f7-5c82295c3648
-# ╟─268b979f-f412-44e0-8b00-104a6a5c5c74
+# ╠═268b979f-f412-44e0-8b00-104a6a5c5c74
+# ╟─306cd2ba-6839-45c1-9911-3394b6d07b52
+# ╠═a791682e-51c2-45c3-b2d2-4a917b122849
+# ╟─a612bb6b-148e-4826-82a2-b522a7c3e8f0
+# ╠═7565201e-eadc-46f4-875f-b4cee3f34fc5
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
