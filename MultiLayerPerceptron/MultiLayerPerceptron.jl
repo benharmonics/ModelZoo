@@ -70,7 +70,7 @@ function dataloaders(args)
 	xtrain, ytrain, xtest, ytest = getdata()
 	
 	trainloader = DataLoader((xtrain, ytrain); batchsize=args.batchsize, shuffle=true)
-	testloader = DataLoader((xtest, ytest); batchsize=size(xtrain, ndims(xtrain)))
+	testloader = DataLoader((xtest, ytest); batchsize=size(xtest, ndims(xtest)))
 	
 	trainloader, testloader
 end
