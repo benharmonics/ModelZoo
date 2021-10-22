@@ -158,7 +158,7 @@ md"Here's the thing though...
 It's pretty clear to us that this random data isn't a number at all."
 
 # ╔═╡ a791682e-51c2-45c3-b2d2-4a917b122849
-randomimg = rand(Float32, 28, 28); Gray.(randomimg[:,:])
+randomimg = rand(Float32, 28, 28); Gray.(randomimg)
 
 # ╔═╡ a612bb6b-148e-4826-82a2-b522a7c3e8f0
 md"However, our model is relatively sure this random data is a $(onecold(randomimg[:,:,:] |> m, 0:9))..."
