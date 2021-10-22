@@ -67,13 +67,13 @@ end
 md"Accuracy score & confusion functions"
 
 # ╔═╡ 1c16dae5-4697-49a1-8f53-2c8e46be32e2
-accuracy(x, y, model) = mean(model(x) |> onecold .== y |> onecold)
+accuracy(model, x, y) = mean(model(x) |> onecold .== y |> onecold)
 
 # ╔═╡ 6e869cba-cc83-4d43-8505-acb342fc4a6e
 md"**Notation:** The transpose of a matrix ```A``` is denoted ```transpose(A)``` or equivalently ```A'```."
 
 # ╔═╡ 1673a7ff-bb0b-44da-ae4f-eb5b8bb6a174
-confusion(x, y, model) = (ŷ = onehotbatch(model(x) |> onecold, 1:10); y * ŷ')
+confusion(model, x, y) = (ŷ = onehotbatch(model(x) |> onecold, 1:10); y * ŷ')
 
 # ╔═╡ 154d9bba-ed7c-4973-8eca-3209f0947bdd
 md"Building & training our model"
@@ -96,7 +96,7 @@ function train(; kws...)
 	
 	_, _, xtest, ytest = getdata()
 	
-	report(epoch) = @info "Epoch $epoch\n\tAccuracy: $(accuracy(xtest, ytest, m))"
+	report(epoch) = @info "Epoch $epoch\n\tAccuracy: $(accuracy(m, xtest, ytest))"
 	
 	@info "Training started."
 	report(0)
@@ -123,10 +123,10 @@ Let's check it out:"
 m, x, y = @time train();
 
 # ╔═╡ 633ad30a-dc6d-475f-8675-484dabb9346a
-accuracy(x, y, m)
+accuracy(m, x, y)
 
 # ╔═╡ 496099b6-3ee9-4a49-87b7-d4a6603963ad
-confusion(x, y, m)
+confusion(m, x, y)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
